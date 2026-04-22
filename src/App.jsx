@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import InvoiceCard from "./components/InvoiceCard";
+import InvoiceDetails from "./components/InvoiceDetails";
 import { useInvoices } from "./context/useInvoices.js";
 
 function App() {
@@ -49,15 +50,8 @@ function App() {
               }
             />
 
-            {/* DETAIL PAGE PLACEHOLDER */}
-            <Route
-              path="/invoice/:id"
-              element={
-                <div className="dark:text-white">
-                  Invoice Detail Page Coming Soon!
-                </div>
-              }
-            />
+            {/* DETAIL PAGE */}
+            <Route path="/invoice/:id" element={<InvoiceDetails />} />
           </Routes>
         </div>
       </main>
