@@ -1,15 +1,22 @@
+import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import InvoiceCard from "./components/InvoiceCard";
 import InvoiceDetails from "./components/InvoiceDetails";
+import InvoiceForm from "./components/InvoiceForm";
 import { useInvoices } from "./context/useInvoices.js";
 
 function App() {
   const { invoices } = useInvoices();
+  // State to manage if the form is open or closed
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg font-spartan transition-colors duration-300">
       <Sidebar />
+
+      {/* Mount the form globally so it overlays everything */}
+      <InvoiceForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
 
       {/* Main Content Area */}
       <main className="md:ml-[103px] pt-[72px] md:pt-0 p-4 md:p-0">
@@ -30,7 +37,10 @@ function App() {
                       </p>
                     </div>
 
-                    <button className="bg-primary hover:bg-primary-hover text-white px-2 py-2 pr-4 rounded-full font-bold flex items-center gap-4 transition-all">
+                    <button
+                      onClick={() => setIsFormOpen(true)} // <-- Add this onClick handler
+                      className="bg-primary hover:bg-primary-hover text-white px-2 py-2 pr-4 rounded-full font-bold flex items-center gap-4 transition-all"
+                    >
                       <div className="bg-white w-8 h-8 rounded-full flex items-center justify-center">
                         <span className="text-primary text-xl">+</span>
                       </div>
