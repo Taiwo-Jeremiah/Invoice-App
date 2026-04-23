@@ -11,6 +11,9 @@ export default function InvoiceDetails() {
   // NEW: State to control the edit form drawer
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
 
+  // NEW: State to control the delete confirmation pop-up
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   const invoice = invoices.find((inv) => inv.id === id);
 
   if (!invoice) {
@@ -98,7 +101,7 @@ export default function InvoiceDetails() {
             Edit
           </button>
           <button
-            onClick={handleDelete}
+            onClick={() => setIsDeleteModalOpen(true)}
             className="bg-danger hover:bg-danger-hover text-white px-6 py-4 rounded-full font-bold transition-colors"
           >
             Delete
@@ -228,7 +231,7 @@ export default function InvoiceDetails() {
           Edit
         </button>
         <button
-          onClick={handleDelete}
+          onClick={() => setIsDeleteModalOpen(true)}
           className="bg-danger hover:bg-danger-hover text-white px-6 py-4 rounded-full font-bold transition-colors"
         >
           Delete
@@ -245,12 +248,49 @@ export default function InvoiceDetails() {
 
       {/* ... your mobile buttons ... */}
 
-      {/* NEW: Render the form and pass the invoice data as a prop */}
+      {/* NEW: Render the form and pass the invoice data as a prop
+      <InvoiceForm
+        isOpen={isEditFormOpen}
+        onClose={() => setIsEditFormOpen(false)}
+        invoiceToEdit={invoice}
+      /> */}
+
+      {/* ... your InvoiceForm ... */}
       <InvoiceForm
         isOpen={isEditFormOpen}
         onClose={() => setIsEditFormOpen(false)}
         invoiceToEdit={invoice}
       />
+
+      {/* --- NEW: DELETE CONFIRMATION MODAL --- */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 transition-opacity">
+          <div className="bg-white dark:bg-dark-surface w-full max-w-[480px] p-8 md:p-12 rounded-lg shadow-xl">
+            <h2 className="text-heading-m font-bold text-dark-bg dark:text-white mb-3">
+              Confirm Deletion
+            </h2>
+            <p className="text-body text-gray-blue dark:text-light-blue mb-6 leading-relaxed">
+              Are you sure you want to delete invoice #{invoice.id}? This action
+              cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 md:gap-4">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="bg-[#F9FAFE] dark:bg-[#252945] hover:bg-[#DFE3FA] dark:hover:bg-white text-[#7E88C3] dark:text-[#DFE3FA] dark:hover:text-gray-blue px-6 py-4 rounded-full font-bold transition-colors"
+              >
+                Cancel
+              </button>
+              {/* THIS button actually fires the delete function! */}
+              <button
+                onClick={handleDelete}
+                className="bg-danger hover:bg-danger-hover text-white px-6 py-4 rounded-full font-bold transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

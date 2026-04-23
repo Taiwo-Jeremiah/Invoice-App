@@ -28,10 +28,16 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
     invoiceToEdit?.items || [{ name: "", quantity: 1, price: 0, total: 0 }],
   );
 
+  // 1. NEW: State to hold our validation errors
+  const [errors, setErrors] = useState({});
   // --- HANDLERS ---
 
   // Generic handler for all standard text inputs
   const handleInputChange = (e) => {
+    // Clear the error for this field when the user starts typing
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: "" });
+    }
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -41,6 +47,10 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
     setItems(items.filter((_, i) => i !== indexToRemove));
 
   const handleItemChange = (index, field, value) => {
+    // NEW: Clear the specific item error when they start typing
+    if (field === "name" && errors[`itemName_${index}`]) {
+      setErrors({ ...errors, [`itemName_${index}`]: "" });
+    }
     const newItems = [...items];
     if (field === "quantity" || field === "price") {
       const numValue = Math.max(0, parseFloat(value) || 0);
@@ -52,9 +62,70 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
     setItems(newItems);
   };
 
+  // --- NEW: VALIDATION LOGIC ---
+  const validateForm = () => {
+    let newErrors = {};
+    let isValid = true;
+
+    const requiredFields = [
+      "senderStreet",
+      "senderCity",
+      "senderPostCode",
+      "senderCountry",
+      "clientName",
+      "clientEmail",
+      "clientStreet",
+      "clientCity",
+      "clientPostCode",
+      "clientCountry",
+      "description",
+    ];
+
+    // 1. Basic empty checks for all main fields
+    requiredFields.forEach((field) => {
+      if (!formData[field] || formData[field].trim() === "") {
+        newErrors[field] = "can't be empty";
+        isValid = false;
+      }
+    });
+
+    // 2. Email Format Check (Only runs if it's not already completely empty)
+    if (formData.clientEmail && formData.clientEmail.trim() !== "") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.clientEmail)) {
+        newErrors.clientEmail = "invalid email";
+        isValid = false;
+      }
+    }
+
+    // 3. Item List Validation
+    if (items.length === 0) {
+      newErrors.items = "An item must be added";
+      isValid = false;
+    } else {
+      // Loop through every item and check if its name is blank
+      items.forEach((item, index) => {
+        if (!item.name || item.name.trim() === "") {
+          // Create a unique error key for this specific item row
+          newErrors[`itemName_${index}`] = "can't be empty";
+          isValid = false;
+        }
+      });
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   // --- THE MAGIC SUBMIT FUNCTION ---
   const handleSubmit = (e, status) => {
     e.preventDefault();
+
+    // NEW: Only validate if they are trying to send it!
+    if (status === "pending") {
+      const isValid = validateForm();
+      if (!isValid) return; // This instantly stops the save if there are errors!
+    }
 
     // 1. Calculate the grand total
     const grandTotal = items.reduce((acc, item) => acc + item.total, 0);
@@ -132,53 +203,112 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                 Bill From
               </h3>
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-body text-gray-blue dark:text-light-blue">
-                    Street Address
-                  </label>
+                {/* Sender Street */}
+                <div className="flex flex-col gap-2 relative">
+                  <div className="flex justify-between items-center">
+                    <label
+                      className={`text-body ${errors.senderStreet ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                    >
+                      Street Address
+                    </label>
+                    {errors.senderStreet && (
+                      <span className="text-danger text-body text-[10px]">
+                        {errors.senderStreet}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     name="senderStreet"
                     value={formData.senderStreet}
                     onChange={handleInputChange}
-                    className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                    className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                      errors.senderStreet
+                        ? "border-danger focus:border-danger"
+                        : "border-border dark:border-[#252945] focus:border-primary"
+                    }`}
                   />
                 </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-body text-gray-blue dark:text-light-blue">
-                      City
-                    </label>
+                  {/* Sender City */}
+                  <div className="flex flex-col gap-2 relative">
+                    <div className="flex justify-between items-center">
+                      <label
+                        className={`text-body ${errors.senderCity ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                      >
+                        City
+                      </label>
+                      {errors.senderCity && (
+                        <span className="text-danger text-body text-[10px]">
+                          {errors.senderCity}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="senderCity"
                       value={formData.senderCity}
                       onChange={handleInputChange}
-                      className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                        errors.senderCity
+                          ? "border-danger focus:border-danger"
+                          : "border-border dark:border-[#252945] focus:border-primary"
+                      }`}
                     />
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-body text-gray-blue dark:text-light-blue">
-                      Post Code
-                    </label>
+
+                  {/* Sender Post Code */}
+                  <div className="flex flex-col gap-2 relative">
+                    <div className="flex justify-between items-center">
+                      <label
+                        className={`text-body ${errors.senderPostCode ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                      >
+                        Post Code
+                      </label>
+                      {errors.senderPostCode && (
+                        <span className="text-danger text-body text-[10px]">
+                          {errors.senderPostCode}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="senderPostCode"
                       value={formData.senderPostCode}
                       onChange={handleInputChange}
-                      className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                        errors.senderPostCode
+                          ? "border-danger focus:border-danger"
+                          : "border-border dark:border-[#252945] focus:border-primary"
+                      }`}
                     />
                   </div>
-                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2">
-                    <label className="text-body text-gray-blue dark:text-light-blue">
-                      Country
-                    </label>
+
+                  {/* Sender Country */}
+                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2 relative">
+                    <div className="flex justify-between items-center">
+                      <label
+                        className={`text-body ${errors.senderCountry ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                      >
+                        Country
+                      </label>
+                      {errors.senderCountry && (
+                        <span className="text-danger text-body text-[10px]">
+                          {errors.senderCountry}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="senderCountry"
                       value={formData.senderCountry}
                       onChange={handleInputChange}
-                      className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                        errors.senderCountry
+                          ? "border-danger focus:border-danger"
+                          : "border-border dark:border-[#252945] focus:border-primary"
+                      }`}
                     />
                   </div>
                 </div>
@@ -189,82 +319,172 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
             <section>
               <h3 className="text-primary text-body font-bold mb-6">Bill To</h3>
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-body text-gray-blue dark:text-light-blue">
-                    Client's Name
-                  </label>
+                {/* Client Name */}
+                <div className="flex flex-col gap-2 relative">
+                  <div className="flex justify-between items-center">
+                    <label
+                      className={`text-body ${errors.clientName ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                    >
+                      Client's Name
+                    </label>
+                    {errors.clientName && (
+                      <span className="text-danger text-body text-[10px]">
+                        {errors.clientName}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     name="clientName"
                     value={formData.clientName}
                     onChange={handleInputChange}
-                    className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                    className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                      errors.clientName
+                        ? "border-danger focus:border-danger"
+                        : "border-border dark:border-[#252945] focus:border-primary"
+                    }`}
                   />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-body text-gray-blue dark:text-light-blue">
-                    Client's Email
-                  </label>
+
+                {/* Client Email */}
+                <div className="flex flex-col gap-2 relative">
+                  <div className="flex justify-between items-center">
+                    <label
+                      className={`text-body ${errors.clientEmail ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                    >
+                      Client's Email
+                    </label>
+                    {errors.clientEmail && (
+                      <span className="text-danger text-body text-[10px]">
+                        {errors.clientEmail}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="email"
                     name="clientEmail"
                     value={formData.clientEmail}
                     onChange={handleInputChange}
-                    className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                    className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                      errors.clientEmail
+                        ? "border-danger focus:border-danger"
+                        : "border-border dark:border-[#252945] focus:border-primary"
+                    }`}
                   />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-body text-gray-blue dark:text-light-blue">
-                    Street Address
-                  </label>
+
+                {/* Client Street */}
+                <div className="flex flex-col gap-2 relative">
+                  <div className="flex justify-between items-center">
+                    <label
+                      className={`text-body ${errors.clientStreet ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                    >
+                      Street Address
+                    </label>
+                    {errors.clientStreet && (
+                      <span className="text-danger text-body text-[10px]">
+                        {errors.clientStreet}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     name="clientStreet"
                     value={formData.clientStreet}
                     onChange={handleInputChange}
-                    className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                    className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                      errors.clientStreet
+                        ? "border-danger focus:border-danger"
+                        : "border-border dark:border-[#252945] focus:border-primary"
+                    }`}
                   />
                 </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-body text-gray-blue dark:text-light-blue">
-                      City
-                    </label>
+                  {/* Client City */}
+                  <div className="flex flex-col gap-2 relative">
+                    <div className="flex justify-between items-center">
+                      <label
+                        className={`text-body ${errors.clientCity ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                      >
+                        City
+                      </label>
+                      {errors.clientCity && (
+                        <span className="text-danger text-body text-[10px]">
+                          {errors.clientCity}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="clientCity"
                       value={formData.clientCity}
                       onChange={handleInputChange}
-                      className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                        errors.clientCity
+                          ? "border-danger focus:border-danger"
+                          : "border-border dark:border-[#252945] focus:border-primary"
+                      }`}
                     />
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-body text-gray-blue dark:text-light-blue">
-                      Post Code
-                    </label>
+
+                  {/* Client Post Code */}
+                  <div className="flex flex-col gap-2 relative">
+                    <div className="flex justify-between items-center">
+                      <label
+                        className={`text-body ${errors.clientPostCode ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                      >
+                        Post Code
+                      </label>
+                      {errors.clientPostCode && (
+                        <span className="text-danger text-body text-[10px]">
+                          {errors.clientPostCode}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="clientPostCode"
                       value={formData.clientPostCode}
                       onChange={handleInputChange}
-                      className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                        errors.clientPostCode
+                          ? "border-danger focus:border-danger"
+                          : "border-border dark:border-[#252945] focus:border-primary"
+                      }`}
                     />
                   </div>
-                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2">
-                    <label className="text-body text-gray-blue dark:text-light-blue">
-                      Country
-                    </label>
+
+                  {/* Client Country */}
+                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2 relative">
+                    <div className="flex justify-between items-center">
+                      <label
+                        className={`text-body ${errors.clientCountry ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                      >
+                        Country
+                      </label>
+                      {errors.clientCountry && (
+                        <span className="text-danger text-body text-[10px]">
+                          {errors.clientCountry}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="clientCountry"
                       value={formData.clientCountry}
                       onChange={handleInputChange}
-                      className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                        errors.clientCountry
+                          ? "border-danger focus:border-danger"
+                          : "border-border dark:border-[#252945] focus:border-primary"
+                      }`}
                     />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-6 mt-6">
+                  {/* Date and Payment Terms stay exactly as they were, no validation needed! */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col gap-2 relative">
                       <label className="text-body text-gray-blue dark:text-light-blue">
@@ -296,16 +516,31 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                       </select>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-body text-gray-blue dark:text-light-blue">
-                      Project Description
-                    </label>
+
+                  {/* Project Description */}
+                  <div className="flex flex-col gap-2 relative">
+                    <div className="flex justify-between items-center">
+                      <label
+                        className={`text-body ${errors.description ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                      >
+                        Project Description
+                      </label>
+                      {errors.description && (
+                        <span className="text-danger text-body text-[10px]">
+                          {errors.description}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
-                      className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                        errors.description
+                          ? "border-danger focus:border-danger"
+                          : "border-border dark:border-[#252945] focus:border-primary"
+                      }`}
                     />
                   </div>
                 </div>
@@ -314,9 +549,17 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
 
             {/* --- DYNAMIC ITEM LIST --- */}
             <section className="mt-8 mb-20">
-              <h3 className="text-[#777F98] text-[18px] font-bold mb-6">
-                Item List
-              </h3>
+              {/* NEW: Added a flexbox to hold the title and the error message */}
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-[#777F98] text-[18px] font-bold">
+                  Item List
+                </h3>
+                {errors.items && (
+                  <span className="text-danger text-body text-[10px]">
+                    {errors.items}
+                  </span>
+                )}
+              </div>
               <div className="hidden md:grid grid-cols-12 gap-4 mb-4 text-body text-gray-blue dark:text-light-blue">
                 <div className="col-span-5">Item Name</div>
                 <div className="col-span-2">Qty.</div>
@@ -329,17 +572,31 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                     key={index}
                     className="grid grid-cols-4 md:grid-cols-12 gap-4 items-center"
                   >
-                    <div className="col-span-4 md:col-span-5 flex flex-col gap-2">
-                      <label className="text-body text-gray-blue dark:text-light-blue md:hidden">
-                        Item Name
-                      </label>
+                    {/* Item Name Column */}
+                    <div className="col-span-4 md:col-span-5 flex flex-col gap-2 relative">
+                      <div className="flex justify-between items-center">
+                        <label
+                          className={`text-body md:hidden ${errors[`itemName_${index}`] ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
+                        >
+                          Item Name
+                        </label>
+                        {errors[`itemName_${index}`] && (
+                          <span className="text-danger text-body text-[10px] ml-auto">
+                            {errors[`itemName_${index}`]}
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         value={item.name}
                         onChange={(e) =>
                           handleItemChange(index, "name", e.target.value)
                         }
-                        className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                        className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
+                          errors[`itemName_${index}`]
+                            ? "border-danger focus:border-danger"
+                            : "border-border dark:border-[#252945] focus:border-primary"
+                        }`}
                       />
                     </div>
                     <div className="col-span-1 md:col-span-2 flex flex-col gap-2">
@@ -348,7 +605,7 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                       </label>
                       <input
                         type="number"
-                        min="0"
+                        min="1"
                         value={item.quantity}
                         onChange={(e) =>
                           handleItemChange(index, "quantity", e.target.value)
@@ -362,7 +619,7 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                       </label>
                       <input
                         type="number"
-                        min="0"
+                        min="1"
                         step="0.01"
                         value={item.price}
                         onChange={(e) =>
