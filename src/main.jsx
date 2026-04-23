@@ -7,7 +7,7 @@ import { InvoiceProvider } from "./context/InvoiceContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/Invoice-App">
       {" "}
       {/* Wrap the Provider */}
       <InvoiceProvider>
