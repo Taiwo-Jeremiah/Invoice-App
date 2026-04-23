@@ -1,18 +1,14 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom"; // Add this
-import "./index.css";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
-import { InvoiceProvider } from "./context/InvoiceContext";
+import "./index.css";
 
-createRoot(document.getElementById("root")).render(
-  <StrictMode>
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    {/* Add the basename right here! */}
     <BrowserRouter basename="/Invoice-App">
-      {" "}
-      {/* Wrap the Provider */}
-      <InvoiceProvider>
-        <App />
-      </InvoiceProvider>
+      <App />
     </BrowserRouter>
-  </StrictMode>,
+  </React.StrictMode>,
 );
