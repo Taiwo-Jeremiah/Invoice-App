@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import InvoiceCard from "./components/InvoiceCard";
 import InvoiceDetails from "./components/InvoiceDetails";
@@ -164,6 +164,8 @@ function App() {
             />
 
             <Route path="/invoice/:id" element={<InvoiceDetails />} />
+            {/* Redirect any unmatched path (e.g. GitHub Pages repo subpath) to root */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </main>
