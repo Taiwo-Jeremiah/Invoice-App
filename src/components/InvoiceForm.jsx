@@ -106,16 +106,14 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
   const handleSubmit = (e, status) => {
     e.preventDefault();
 
-    if (status === "pending") {
+    if (status !== "draft") {
       const isValid = validateForm();
       if (!isValid) return;
     }
 
     const grandTotal = items.reduce((acc, item) => acc + item.total, 0);
-
     const finalCreatedAt =
       formData.createdAt || new Date().toISOString().split("T")[0];
-
     const dueDate = new Date(finalCreatedAt);
     dueDate.setDate(dueDate.getDate() + parseInt(formData.paymentTerms));
     const finalPaymentDue = dueDate.toISOString().split("T")[0];
@@ -162,13 +160,12 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
         onClick={onClose}
       ></div>
 
-      <div className="relative w-full md:w-[719px] h-full bg-white dark:bg-dark-bg md:pl-[103px] rounded-r-2xl md:rounded-r-[20px] overflow-y-auto transition-transform duration-300 ease-in-out">
+      <div className="relative w-full md:w-[719px] h-full bg-white dark:bg-[#141625] md:pl-[103px] rounded-r-2xl md:rounded-r-[20px] overflow-y-auto transition-colors duration-300">
         <div className="p-6 md:p-14">
-          {/* --- NEW: DYNAMIC TITLE --- */}
-          <h2 className="text-heading-m font-bold mb-12 dark:text-white">
+          <h2 className="text-heading-m font-bold mb-12 text-[#0C0E16] dark:text-white transition-colors">
             {invoiceToEdit?.id ? (
               <>
-                Edit <span className="text-gray-blue">#</span>
+                Edit <span className="text-[#7E88C3]">#</span>
                 {invoiceToEdit.id}
               </>
             ) : (
@@ -176,434 +173,256 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
             )}
           </h2>
 
-          <form className="flex flex-col gap-12" id="invoice-form">
+          <form className="flex flex-col gap-12 pb-32">
+            {/* --- BILL FROM --- */}
             <section>
               <h3 className="text-primary text-body font-bold mb-6">
                 Bill From
               </h3>
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2 relative">
-                  <div className="flex justify-between items-center">
-                    <label
-                      className={`text-body ${errors.senderStreet ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                    >
-                      Street Address
-                    </label>
-                    {errors.senderStreet && (
-                      <span className="text-danger text-body text-[10px]">
-                        {errors.senderStreet}
-                      </span>
-                    )}
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <label
+                    className={`text-body font-medium ${errors.senderStreet ? "text-danger" : "text-[#7E88C3] dark:text-light-blue"}`}
+                  >
+                    Street Address
+                  </label>
                   <input
                     type="text"
                     name="senderStreet"
                     value={formData.senderStreet}
                     onChange={handleInputChange}
-                    className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                      errors.senderStreet
-                        ? "border-danger focus:border-danger"
-                        : "border-border dark:border-[#252945] focus:border-primary"
-                    }`}
+                    className={`w-full bg-white dark:bg-[#1E2139] border rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white focus:outline-none ${errors.senderStreet ? "border-danger" : "border-[#DFE3FA] dark:border-[#252945] focus:border-primary"}`}
                   />
                 </div>
-
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="flex flex-col gap-2 relative">
-                    <div className="flex justify-between items-center">
-                      <label
-                        className={`text-body ${errors.senderCity ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                      >
-                        City
-                      </label>
-                      {errors.senderCity && (
-                        <span className="text-danger text-body text-[10px]">
-                          {errors.senderCity}
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                      City
+                    </label>
                     <input
                       type="text"
                       name="senderCity"
                       value={formData.senderCity}
                       onChange={handleInputChange}
-                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                        errors.senderCity
-                          ? "border-danger focus:border-danger"
-                          : "border-border dark:border-[#252945] focus:border-primary"
-                      }`}
+                      className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                     />
                   </div>
-
-                  <div className="flex flex-col gap-2 relative">
-                    <div className="flex justify-between items-center">
-                      <label
-                        className={`text-body ${errors.senderPostCode ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                      >
-                        Post Code
-                      </label>
-                      {errors.senderPostCode && (
-                        <span className="text-danger text-body text-[10px]">
-                          {errors.senderPostCode}
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                      Post Code
+                    </label>
                     <input
                       type="text"
                       name="senderPostCode"
                       value={formData.senderPostCode}
                       onChange={handleInputChange}
-                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                        errors.senderPostCode
-                          ? "border-danger focus:border-danger"
-                          : "border-border dark:border-[#252945] focus:border-primary"
-                      }`}
+                      className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                     />
                   </div>
-
-                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2 relative">
-                    <div className="flex justify-between items-center">
-                      <label
-                        className={`text-body ${errors.senderCountry ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                      >
-                        Country
-                      </label>
-                      {errors.senderCountry && (
-                        <span className="text-danger text-body text-[10px]">
-                          {errors.senderCountry}
-                        </span>
-                      )}
-                    </div>
+                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2">
+                    <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                      Country
+                    </label>
                     <input
                       type="text"
                       name="senderCountry"
                       value={formData.senderCountry}
                       onChange={handleInputChange}
-                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                        errors.senderCountry
-                          ? "border-danger focus:border-danger"
-                          : "border-border dark:border-[#252945] focus:border-primary"
-                      }`}
+                      className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                     />
                   </div>
                 </div>
               </div>
             </section>
 
+            {/* --- BILL TO --- */}
             <section>
               <h3 className="text-primary text-body font-bold mb-6">Bill To</h3>
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2 relative">
-                  <div className="flex justify-between items-center">
-                    <label
-                      className={`text-body ${errors.clientName ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                    >
-                      Client's Name
-                    </label>
-                    {errors.clientName && (
-                      <span className="text-danger text-body text-[10px]">
-                        {errors.clientName}
-                      </span>
-                    )}
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                    Client's Name
+                  </label>
                   <input
                     type="text"
                     name="clientName"
                     value={formData.clientName}
                     onChange={handleInputChange}
-                    className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                      errors.clientName
-                        ? "border-danger focus:border-danger"
-                        : "border-border dark:border-[#252945] focus:border-primary"
-                    }`}
+                    className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                   />
                 </div>
-
-                <div className="flex flex-col gap-2 relative">
-                  <div className="flex justify-between items-center">
-                    <label
-                      className={`text-body ${errors.clientEmail ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                    >
-                      Client's Email
-                    </label>
-                    {errors.clientEmail && (
-                      <span className="text-danger text-body text-[10px]">
-                        {errors.clientEmail}
-                      </span>
-                    )}
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                    Client's Email
+                  </label>
                   <input
                     type="email"
                     name="clientEmail"
                     value={formData.clientEmail}
                     onChange={handleInputChange}
-                    className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                      errors.clientEmail
-                        ? "border-danger focus:border-danger"
-                        : "border-border dark:border-[#252945] focus:border-primary"
-                    }`}
+                    className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                   />
                 </div>
-
-                <div className="flex flex-col gap-2 relative">
-                  <div className="flex justify-between items-center">
-                    <label
-                      className={`text-body ${errors.clientStreet ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                    >
-                      Street Address
-                    </label>
-                    {errors.clientStreet && (
-                      <span className="text-danger text-body text-[10px]">
-                        {errors.clientStreet}
-                      </span>
-                    )}
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                    Street Address
+                  </label>
                   <input
                     type="text"
                     name="clientStreet"
                     value={formData.clientStreet}
                     onChange={handleInputChange}
-                    className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                      errors.clientStreet
-                        ? "border-danger focus:border-danger"
-                        : "border-border dark:border-[#252945] focus:border-primary"
-                    }`}
+                    className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                   />
                 </div>
-
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="flex flex-col gap-2 relative">
-                    <div className="flex justify-between items-center">
-                      <label
-                        className={`text-body ${errors.clientCity ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                      >
-                        City
-                      </label>
-                      {errors.clientCity && (
-                        <span className="text-danger text-body text-[10px]">
-                          {errors.clientCity}
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                      City
+                    </label>
                     <input
                       type="text"
                       name="clientCity"
                       value={formData.clientCity}
                       onChange={handleInputChange}
-                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                        errors.clientCity
-                          ? "border-danger focus:border-danger"
-                          : "border-border dark:border-[#252945] focus:border-primary"
-                      }`}
+                      className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                     />
                   </div>
-
-                  <div className="flex flex-col gap-2 relative">
-                    <div className="flex justify-between items-center">
-                      <label
-                        className={`text-body ${errors.clientPostCode ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                      >
-                        Post Code
-                      </label>
-                      {errors.clientPostCode && (
-                        <span className="text-danger text-body text-[10px]">
-                          {errors.clientPostCode}
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                      Post Code
+                    </label>
                     <input
                       type="text"
                       name="clientPostCode"
                       value={formData.clientPostCode}
                       onChange={handleInputChange}
-                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                        errors.clientPostCode
-                          ? "border-danger focus:border-danger"
-                          : "border-border dark:border-[#252945] focus:border-primary"
-                      }`}
+                      className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                     />
                   </div>
-
-                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2 relative">
-                    <div className="flex justify-between items-center">
-                      <label
-                        className={`text-body ${errors.clientCountry ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                      >
-                        Country
-                      </label>
-                      {errors.clientCountry && (
-                        <span className="text-danger text-body text-[10px]">
-                          {errors.clientCountry}
-                        </span>
-                      )}
-                    </div>
+                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2">
+                    <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                      Country
+                    </label>
                     <input
                       type="text"
                       name="clientCountry"
                       value={formData.clientCountry}
                       onChange={handleInputChange}
-                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                        errors.clientCountry
-                          ? "border-danger focus:border-danger"
-                          : "border-border dark:border-[#252945] focus:border-primary"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-6 mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2 relative">
-                      <label className="text-body text-gray-blue dark:text-light-blue">
-                        Invoice Date
-                      </label>
-                      <input
-                        type="date"
-                        name="createdAt"
-                        value={formData.createdAt}
-                        onChange={handleInputChange}
-                        max="9999-12-31"
-                        className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary cursor-pointer"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-body text-gray-blue dark:text-light-blue">
-                        Payment Terms
-                      </label>
-                      <select
-                        name="paymentTerms"
-                        value={formData.paymentTerms}
-                        onChange={handleInputChange}
-                        className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary cursor-pointer"
-                      >
-                        <option value="1">Net 1 Day</option>
-                        <option value="7">Net 7 Days</option>
-                        <option value="14">Net 14 Days</option>
-                        <option value="30">Net 30 Days</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 relative">
-                    <div className="flex justify-between items-center">
-                      <label
-                        className={`text-body ${errors.description ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                      >
-                        Project Description
-                      </label>
-                      {errors.description && (
-                        <span className="text-danger text-body text-[10px]">
-                          {errors.description}
-                        </span>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                        errors.description
-                          ? "border-danger focus:border-danger"
-                          : "border-border dark:border-[#252945] focus:border-primary"
-                      }`}
+                      className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                     />
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="mt-8 mb-20">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-[#777F98] text-[18px] font-bold">
-                  Item List
-                </h3>
-                {errors.items && (
-                  <span className="text-danger text-body text-[10px]">
-                    {errors.items}
-                  </span>
-                )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-2">
+                <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                  Invoice Date
+                </label>
+                <input
+                  type="date"
+                  name="createdAt"
+                  value={formData.createdAt}
+                  onChange={handleInputChange}
+                  className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
+                />
               </div>
-              <div className="hidden md:grid grid-cols-12 gap-4 mb-4 text-body text-gray-blue dark:text-light-blue">
-                <div className="col-span-5">Item Name</div>
-                <div className="col-span-2">Qty.</div>
-                <div className="col-span-3">Price</div>
-                <div className="col-span-2">Total</div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                  Payment Terms
+                </label>
+                <select
+                  name="paymentTerms"
+                  value={formData.paymentTerms}
+                  onChange={handleInputChange}
+                  className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
+                >
+                  <option value="1">Net 1 Day</option>
+                  <option value="7">Net 7 Days</option>
+                  <option value="14">Net 14 Days</option>
+                  <option value="30">Net 30 Days</option>
+                </select>
               </div>
-              <div className="flex flex-col gap-12 md:gap-4 mb-4">
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[#7E88C3] dark:text-light-blue text-body">
+                Project Description
+              </label>
+              <input
+                type="text"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
+              />
+            </div>
+
+            {/* --- ITEM LIST --- */}
+            <section className="mt-8">
+              <h3 className="text-[#777F98] text-[18px] font-bold mb-6">
+                Item List
+              </h3>
+              <div className="flex flex-col gap-4">
                 {items.map((item, index) => (
                   <div
                     key={index}
                     className="grid grid-cols-4 md:grid-cols-12 gap-4 items-center"
                   >
-                    <div className="col-span-4 md:col-span-5 flex flex-col gap-2 relative">
-                      <div className="flex justify-between items-center">
-                        <label
-                          className={`text-body md:hidden ${errors[`itemName_${index}`] ? "text-danger" : "text-gray-blue dark:text-light-blue"}`}
-                        >
-                          Item Name
-                        </label>
-                        {errors[`itemName_${index}`] && (
-                          <span className="text-danger text-body text-[10px] ml-auto">
-                            {errors[`itemName_${index}`]}
-                          </span>
-                        )}
-                      </div>
+                    <div className="col-span-4 md:col-span-5 flex flex-col gap-2">
+                      <label className="text-[#7E88C3] dark:text-light-blue text-body md:hidden">
+                        Item Name
+                      </label>
                       <input
                         type="text"
                         value={item.name}
                         onChange={(e) =>
                           handleItemChange(index, "name", e.target.value)
                         }
-                        className={`w-full bg-white dark:bg-dark-surface border rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none ${
-                          errors[`itemName_${index}`]
-                            ? "border-danger focus:border-danger"
-                            : "border-border dark:border-[#252945] focus:border-primary"
-                        }`}
+                        className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                       />
                     </div>
                     <div className="col-span-1 md:col-span-2 flex flex-col gap-2">
-                      <label className="text-body text-gray-blue dark:text-light-blue md:hidden">
+                      <label className="text-[#7E88C3] dark:text-light-blue text-body md:hidden">
                         Qty.
                       </label>
                       <input
                         type="number"
-                        min="1"
                         value={item.quantity}
                         onChange={(e) =>
                           handleItemChange(index, "quantity", e.target.value)
                         }
-                        className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary text-center"
+                        className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white text-center"
                       />
                     </div>
                     <div className="col-span-2 md:col-span-3 flex flex-col gap-2">
-                      <label className="text-body text-gray-blue dark:text-light-blue md:hidden">
+                      <label className="text-[#7E88C3] dark:text-light-blue text-body md:hidden">
                         Price
                       </label>
                       <input
                         type="number"
-                        min="1"
-                        step="0.01"
                         value={item.price}
                         onChange={(e) =>
                           handleItemChange(index, "price", e.target.value)
                         }
-                        className="w-full bg-white dark:bg-dark-surface border border-border dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold dark:text-white focus:outline-none focus:border-primary"
+                        className="w-full bg-white dark:bg-[#1E2139] border border-[#DFE3FA] dark:border-[#252945] rounded px-5 py-4 text-heading-s font-bold text-[#0C0E16] dark:text-white"
                       />
                     </div>
                     <div className="col-span-1 md:col-span-2 flex items-center justify-between">
-                      <div className="flex flex-col gap-2 w-full">
-                        <label className="text-body text-gray-blue dark:text-light-blue md:hidden">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[#7E88C3] dark:text-light-blue text-body md:hidden">
                           Total
                         </label>
-                        <div className="py-4 text-heading-s font-bold text-gray-blue dark:text-light-blue bg-transparent border border-transparent">
+                        <div className="py-4 text-heading-s font-bold text-[#7E88C3]">
                           {item.total.toFixed(2)}
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(index)}
-                        className="mt-6 md:mt-0 p-2 text-[#888EB0] hover:text-danger transition-colors"
+                        className="p-2 text-[#888EB0] hover:text-danger"
                       >
                         <svg
                           width="13"
@@ -624,7 +443,7 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="w-full bg-[#F9FAFE] dark:bg-[#252945] hover:bg-[#DFE3FA] text-[#7E88C3] dark:text-[#DFE3FA] py-4 rounded-full font-bold transition-colors mt-4"
+                className="w-full bg-[#F9FAFE] dark:bg-[#252945] text-[#7E88C3] dark:text-[#DFE3FA] py-4 rounded-full font-bold mt-4"
               >
                 + Add New Item
               </button>
@@ -632,34 +451,31 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
           </form>
         </div>
 
-        {/* --- NEW: DYNAMIC BOTTOM ACTION BAR --- */}
-        <div className="fixed bottom-0 left-0 w-full md:w-[719px] md:pl-[103px] p-6 bg-white dark:bg-dark-bg shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex justify-between rounded-br-2xl items-center">
+        {/* --- DYNAMIC ACTION BAR --- */}
+        <div className="fixed bottom-0 left-0 w-full md:w-[719px] md:pl-[103px] p-6 bg-white dark:bg-[#141625] shadow-[0_-10px_20px_rgba(0,0,0,0.1)] flex justify-between rounded-br-2xl items-center transition-colors">
           {invoiceToEdit?.id ? (
-            // BUTTONS FOR EDIT MODE
             <div className="flex justify-end gap-2 w-full">
               <button
                 type="button"
                 onClick={onClose}
-                className="bg-[#F9FAFE] hover:bg-[#DFE3FA] dark:bg-[#252945] dark:hover:bg-white dark:hover:text-gray-blue text-[#7E88C3] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold transition-colors"
+                className="bg-[#F9FAFE] hover:bg-[#DFE3FA] dark:bg-[#252945] dark:hover:bg-white dark:hover:text-[#7E88C3] text-[#7E88C3] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                // This keeps the invoice in whatever status it currently has!
                 onClick={(e) => handleSubmit(e, invoiceToEdit.status)}
-                className="bg-primary hover:bg-primary-hover text-white px-6 py-4 rounded-full font-bold transition-colors"
+                className="bg-primary hover:bg-primary-hover text-white px-6 py-4 rounded-full font-bold"
               >
                 Save Changes
               </button>
             </div>
           ) : (
-            // BUTTONS FOR CREATE MODE
             <>
               <button
                 type="button"
                 onClick={onClose}
-                className="bg-[#F9FAFE] hover:bg-[#DFE3FA] dark:bg-[#252945] dark:hover:bg-white dark:hover:text-gray-blue text-[#7E88C3] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold transition-colors"
+                className="bg-[#F9FAFE] hover:bg-[#DFE3FA] dark:bg-[#252945] dark:hover:bg-white dark:hover:text-[#7E88C3] text-[#7E88C3] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold"
               >
                 Discard
               </button>
@@ -667,14 +483,14 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                 <button
                   type="button"
                   onClick={(e) => handleSubmit(e, "draft")}
-                  className="bg-[#373B53] hover:bg-[#0C0E16] dark:bg-[#373B53] dark:hover:bg-[#1E2139] text-[#888EB0] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold transition-colors"
+                  className="bg-[#373B53] hover:bg-[#0C0E16] text-[#888EB0] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold"
                 >
                   Save as Draft
                 </button>
                 <button
                   type="button"
                   onClick={(e) => handleSubmit(e, "pending")}
-                  className="bg-primary hover:bg-primary-hover text-white px-6 py-4 rounded-full font-bold transition-colors"
+                  className="bg-primary hover:bg-primary-hover text-white px-6 py-4 rounded-full font-bold"
                 >
                   Save & Send
                 </button>
