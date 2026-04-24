@@ -248,13 +248,6 @@ export default function InvoiceDetails() {
 
       {/* ... your mobile buttons ... */}
 
-      {/* NEW: Render the form and pass the invoice data as a prop
-      <InvoiceForm
-        isOpen={isEditFormOpen}
-        onClose={() => setIsEditFormOpen(false)}
-        invoiceToEdit={invoice}
-      /> */}
-
       {/* ... your InvoiceForm ... */}
       <InvoiceForm
         isOpen={isEditFormOpen}

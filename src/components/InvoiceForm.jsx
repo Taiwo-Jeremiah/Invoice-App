@@ -1,12 +1,9 @@
-import { useState } from "react"; // <-- No need to import useEffect anymore!
+import { useState } from "react";
 import { useInvoices } from "../context/useInvoices";
 
 export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
-  // 1. Bring in BOTH functions from your context (Don't forget updateInvoice!)
   const { addInvoice, updateInvoice } = useInvoices();
 
-  // 2. Initialize state DIRECTLY with the edit data!
-  // We use the optional chaining (?.) so it doesn't crash if invoiceToEdit is null
   const [formData, setFormData] = useState({
     senderStreet: invoiceToEdit?.senderAddress?.street || "",
     senderCity: invoiceToEdit?.senderAddress?.city || "",
@@ -23,18 +20,13 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
     description: invoiceToEdit?.description || "",
   });
 
-  // 3. Initialize the items directly too
   const [items, setItems] = useState(
     invoiceToEdit?.items || [{ name: "", quantity: 1, price: 0, total: 0 }],
   );
 
-  // 1. NEW: State to hold our validation errors
   const [errors, setErrors] = useState({});
-  // --- HANDLERS ---
 
-  // Generic handler for all standard text inputs
   const handleInputChange = (e) => {
-    // Clear the error for this field when the user starts typing
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: "" });
     }
@@ -43,11 +35,11 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
 
   const handleAddItem = () =>
     setItems([...items, { name: "", quantity: 1, price: 0, total: 0 }]);
+
   const handleRemoveItem = (indexToRemove) =>
     setItems(items.filter((_, i) => i !== indexToRemove));
 
   const handleItemChange = (index, field, value) => {
-    // NEW: Clear the specific item error when they start typing
     if (field === "name" && errors[`itemName_${index}`]) {
       setErrors({ ...errors, [`itemName_${index}`]: "" });
     }
@@ -62,7 +54,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
     setItems(newItems);
   };
 
-  // --- NEW: VALIDATION LOGIC ---
   const validateForm = () => {
     let newErrors = {};
     let isValid = true;
@@ -81,7 +72,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
       "description",
     ];
 
-    // 1. Basic empty checks for all main fields
     requiredFields.forEach((field) => {
       if (!formData[field] || formData[field].trim() === "") {
         newErrors[field] = "can't be empty";
@@ -89,7 +79,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
       }
     });
 
-    // 2. Email Format Check (Only runs if it's not already completely empty)
     if (formData.clientEmail && formData.clientEmail.trim() !== "") {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.clientEmail)) {
@@ -98,15 +87,12 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
       }
     }
 
-    // 3. Item List Validation
     if (items.length === 0) {
       newErrors.items = "An item must be added";
       isValid = false;
     } else {
-      // Loop through every item and check if its name is blank
       items.forEach((item, index) => {
         if (!item.name || item.name.trim() === "") {
-          // Create a unique error key for this specific item row
           newErrors[`itemName_${index}`] = "can't be empty";
           isValid = false;
         }
@@ -117,33 +103,26 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
     return isValid;
   };
 
-  // --- THE MAGIC SUBMIT FUNCTION ---
   const handleSubmit = (e, status) => {
     e.preventDefault();
 
-    // NEW: Only validate if they are trying to send it!
     if (status === "pending") {
       const isValid = validateForm();
-      if (!isValid) return; // This instantly stops the save if there are errors!
+      if (!isValid) return;
     }
 
-    // 1. Calculate the grand total
     const grandTotal = items.reduce((acc, item) => acc + item.total, 0);
 
-    // 2. Fix the Date Logic
-    // Grab the date the user picked, or use today's date if they left it blank
     const finalCreatedAt =
       formData.createdAt || new Date().toISOString().split("T")[0];
 
-    // Calculate the actual Due Date by adding the payment terms (e.g., + 30 days)
     const dueDate = new Date(finalCreatedAt);
     dueDate.setDate(dueDate.getDate() + parseInt(formData.paymentTerms));
     const finalPaymentDue = dueDate.toISOString().split("T")[0];
 
-    // 3. Package the data
     const newInvoice = {
       createdAt: finalCreatedAt,
-      paymentDue: finalPaymentDue, // <-- Now this will have a real date!
+      paymentDue: finalPaymentDue,
       description: formData.description,
       paymentTerms: parseInt(formData.paymentTerms),
       clientName: formData.clientName,
@@ -165,19 +144,12 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
       total: grandTotal,
     };
 
-    // ... inside handleSubmit, after defining newInvoice ...
-
     if (invoiceToEdit) {
-      // If we are editing, attach the existing ID and update
       updateInvoice({ ...newInvoice, id: invoiceToEdit.id });
     } else {
-      // If we are creating, just add it like normal
       addInvoice(newInvoice);
     }
 
-    onClose();
-    // console.log("SENDING TO CONTEXT: ", newInvoice);
-    // addInvoice(newInvoice);
     onClose();
   };
 
@@ -192,18 +164,24 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
 
       <div className="relative w-full md:w-[719px] h-full bg-white dark:bg-dark-bg md:pl-[103px] rounded-r-2xl md:rounded-r-[20px] overflow-y-auto transition-transform duration-300 ease-in-out">
         <div className="p-6 md:p-14">
+          {/* --- NEW: DYNAMIC TITLE --- */}
           <h2 className="text-heading-m font-bold mb-12 dark:text-white">
-            New Invoice
+            {invoiceToEdit?.id ? (
+              <>
+                Edit <span className="text-gray-blue">#</span>
+                {invoiceToEdit.id}
+              </>
+            ) : (
+              "New Invoice"
+            )}
           </h2>
 
           <form className="flex flex-col gap-12" id="invoice-form">
-            {/* --- BILL FROM --- */}
             <section>
               <h3 className="text-primary text-body font-bold mb-6">
                 Bill From
               </h3>
               <div className="flex flex-col gap-6">
-                {/* Sender Street */}
                 <div className="flex flex-col gap-2 relative">
                   <div className="flex justify-between items-center">
                     <label
@@ -231,7 +209,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  {/* Sender City */}
                   <div className="flex flex-col gap-2 relative">
                     <div className="flex justify-between items-center">
                       <label
@@ -258,7 +235,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                     />
                   </div>
 
-                  {/* Sender Post Code */}
                   <div className="flex flex-col gap-2 relative">
                     <div className="flex justify-between items-center">
                       <label
@@ -285,7 +261,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                     />
                   </div>
 
-                  {/* Sender Country */}
                   <div className="col-span-2 md:col-span-1 flex flex-col gap-2 relative">
                     <div className="flex justify-between items-center">
                       <label
@@ -315,11 +290,9 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
               </div>
             </section>
 
-            {/* --- BILL TO --- */}
             <section>
               <h3 className="text-primary text-body font-bold mb-6">Bill To</h3>
               <div className="flex flex-col gap-6">
-                {/* Client Name */}
                 <div className="flex flex-col gap-2 relative">
                   <div className="flex justify-between items-center">
                     <label
@@ -346,7 +319,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                   />
                 </div>
 
-                {/* Client Email */}
                 <div className="flex flex-col gap-2 relative">
                   <div className="flex justify-between items-center">
                     <label
@@ -373,7 +345,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                   />
                 </div>
 
-                {/* Client Street */}
                 <div className="flex flex-col gap-2 relative">
                   <div className="flex justify-between items-center">
                     <label
@@ -401,7 +372,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  {/* Client City */}
                   <div className="flex flex-col gap-2 relative">
                     <div className="flex justify-between items-center">
                       <label
@@ -428,7 +398,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                     />
                   </div>
 
-                  {/* Client Post Code */}
                   <div className="flex flex-col gap-2 relative">
                     <div className="flex justify-between items-center">
                       <label
@@ -455,7 +424,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                     />
                   </div>
 
-                  {/* Client Country */}
                   <div className="col-span-2 md:col-span-1 flex flex-col gap-2 relative">
                     <div className="flex justify-between items-center">
                       <label
@@ -484,7 +452,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                 </div>
 
                 <div className="flex flex-col gap-6 mt-6">
-                  {/* Date and Payment Terms stay exactly as they were, no validation needed! */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col gap-2 relative">
                       <label className="text-body text-gray-blue dark:text-light-blue">
@@ -517,7 +484,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                     </div>
                   </div>
 
-                  {/* Project Description */}
                   <div className="flex flex-col gap-2 relative">
                     <div className="flex justify-between items-center">
                       <label
@@ -547,9 +513,7 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
               </div>
             </section>
 
-            {/* --- DYNAMIC ITEM LIST --- */}
             <section className="mt-8 mb-20">
-              {/* NEW: Added a flexbox to hold the title and the error message */}
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-[#777F98] text-[18px] font-bold">
                   Item List
@@ -572,7 +536,6 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
                     key={index}
                     className="grid grid-cols-4 md:grid-cols-12 gap-4 items-center"
                   >
-                    {/* Item Name Column */}
                     <div className="col-span-4 md:col-span-5 flex flex-col gap-2 relative">
                       <div className="flex justify-between items-center">
                         <label
@@ -669,30 +632,55 @@ export default function InvoiceForm({ isOpen, onClose, invoiceToEdit = null }) {
           </form>
         </div>
 
-        {/* --- BOTTOM ACTION BAR --- */}
-        <div className="fixed bottom-0 left-0 w-full md:w-[719px] md:pl-[103px] p-6 bg-white dark:bg-dark-bg shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex justify-between rounded-br-2xl">
-          <button
-            onClick={onClose}
-            className="bg-[#F9FAFE] hover:bg-[#DFE3FA] dark:bg-[#252945] dark:hover:bg-white dark:hover:text-gray-blue text-[#7E88C3] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold transition-colors"
-          >
-            Discard
-          </button>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={(e) => handleSubmit(e, "draft")}
-              className="bg-[#373B53] hover:bg-[#0C0E16] dark:bg-[#373B53] dark:hover:bg-[#1E2139] text-[#888EB0] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold transition-colors"
-            >
-              Save as Draft
-            </button>
-            <button
-              type="button"
-              onClick={(e) => handleSubmit(e, "pending")}
-              className="bg-primary hover:bg-primary-hover text-white px-6 py-4 rounded-full font-bold transition-colors"
-            >
-              Save & Send
-            </button>
-          </div>
+        {/* --- NEW: DYNAMIC BOTTOM ACTION BAR --- */}
+        <div className="fixed bottom-0 left-0 w-full md:w-[719px] md:pl-[103px] p-6 bg-white dark:bg-dark-bg shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex justify-between rounded-br-2xl items-center">
+          {invoiceToEdit?.id ? (
+            // BUTTONS FOR EDIT MODE
+            <div className="flex justify-end gap-2 w-full">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-[#F9FAFE] hover:bg-[#DFE3FA] dark:bg-[#252945] dark:hover:bg-white dark:hover:text-gray-blue text-[#7E88C3] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                // This keeps the invoice in whatever status it currently has!
+                onClick={(e) => handleSubmit(e, invoiceToEdit.status)}
+                className="bg-primary hover:bg-primary-hover text-white px-6 py-4 rounded-full font-bold transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          ) : (
+            // BUTTONS FOR CREATE MODE
+            <>
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-[#F9FAFE] hover:bg-[#DFE3FA] dark:bg-[#252945] dark:hover:bg-white dark:hover:text-gray-blue text-[#7E88C3] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold transition-colors"
+              >
+                Discard
+              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => handleSubmit(e, "draft")}
+                  className="bg-[#373B53] hover:bg-[#0C0E16] dark:bg-[#373B53] dark:hover:bg-[#1E2139] text-[#888EB0] dark:text-[#DFE3FA] px-6 py-4 rounded-full font-bold transition-colors"
+                >
+                  Save as Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleSubmit(e, "pending")}
+                  className="bg-primary hover:bg-primary-hover text-white px-6 py-4 rounded-full font-bold transition-colors"
+                >
+                  Save & Send
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
