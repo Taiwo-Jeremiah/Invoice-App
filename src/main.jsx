@@ -1,17 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom"; // <-- Changed to HashRouter!
 import { InvoiceProvider } from "./context/InvoiceContext.jsx";
 import App from "./App.jsx";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {/* Add the basename right here! */}
     <InvoiceProvider>
-      <BrowserRouter basename="/Invoice-App">
+      {/* HashRouter doesn't need a basename, it just works! */}
+      <HashRouter>
         <App />
-      </BrowserRouter>
+      </HashRouter>
     </InvoiceProvider>
   </React.StrictMode>,
 );

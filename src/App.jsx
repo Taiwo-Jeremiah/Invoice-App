@@ -6,27 +6,25 @@ import InvoiceDetails from "./components/InvoiceDetails";
 import InvoiceForm from "./components/InvoiceForm";
 import { useInvoices } from "./context/useInvoices.js";
 
+// --- FIX: Import the image so Vite knows to include it in the build! ---
+import emptyIllustration from "./assets/illustration-empty.svg";
+
 function App() {
   const { invoices } = useInvoices();
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // --- NEW: FILTER STATES ---
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
-  // UPDATED: Check localStorage first
   const [filterStatuses, setFilterStatuses] = useState(() => {
     const savedFilters = localStorage.getItem("invoiceFilters");
     return savedFilters ? JSON.parse(savedFilters) : [];
   });
 
-  // NEW: Save to localStorage whenever the array changes
   useEffect(() => {
     localStorage.setItem("invoiceFilters", JSON.stringify(filterStatuses));
   }, [filterStatuses]);
 
-  // --- NEW: FILTER LOGIC ---
   const toggleFilter = (status) => {
-    // If the status is already checked, remove it from the array. Otherwise, add it!
     if (filterStatuses.includes(status)) {
       setFilterStatuses(filterStatuses.filter((s) => s !== status));
     } else {
@@ -34,7 +32,6 @@ function App() {
     }
   };
 
-  // Create a new array that only contains invoices matching the selected filters
   const filteredInvoices = invoices.filter((invoice) =>
     filterStatuses.length === 0
       ? true
@@ -55,20 +52,16 @@ function App() {
               element={
                 <div>
                   <div className="flex justify-between items-center mb-12">
-                    {/* Header Title */}
                     <div>
                       <h1 className="text-heading-l dark:text-white transition-colors">
                         Invoices
                       </h1>
                       <p className="text-gray-blue text-body mt-1">
-                        {/* Notice we changed this to use filteredInvoices.length! */}
                         There are {filteredInvoices.length} total invoices
                       </p>
                     </div>
 
-                    {/* NEW: Flex container to hold both the Filter and New button */}
                     <div className="flex items-center gap-4 md:gap-10">
-                      {/* --- NEW: FILTER DROPDOWN COMPONENT --- */}
                       <div className="relative">
                         <button
                           onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
@@ -76,7 +69,6 @@ function App() {
                         >
                           Filter{" "}
                           <span className="hidden md:inline">by status</span>
-                          {/* A little arrow SVG that flips when the menu opens */}
                           <svg
                             width="11"
                             height="7"
@@ -93,7 +85,6 @@ function App() {
                           </svg>
                         </button>
 
-                        {/* The Dropdown Menu Box */}
                         {isFilterMenuOpen && (
                           <div className="absolute top-full mt-6 left-1/2 -translate-x-1/2 w-[192px] bg-white dark:bg-[#252945] shadow-[0_10px_20px_rgba(0,0,0,0.25)] rounded-lg p-6 flex flex-col gap-4 z-50">
                             {["draft", "pending", "paid"].map((status) => (
@@ -105,7 +96,6 @@ function App() {
                                   type="checkbox"
                                   checked={filterStatuses.includes(status)}
                                   onChange={() => toggleFilter(status)}
-                                  // Tailwind's accent color makes standard checkboxes look great quickly!
                                   className="w-4 h-4 accent-primary cursor-pointer border-transparent bg-[#DFE3FA] dark:bg-[#1E2139]"
                                 />
                                 <span className="text-heading-s font-bold capitalize dark:text-white group-hover:text-primary transition-colors">
@@ -117,7 +107,6 @@ function App() {
                         )}
                       </div>
 
-                      {/* Your existing New Invoice Button */}
                       <button
                         onClick={() => setIsFormOpen(true)}
                         className="bg-primary hover:bg-primary-hover text-white px-2 py-2 pr-4 rounded-full font-bold flex items-center gap-4 transition-all"
@@ -132,19 +121,16 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Invoice List Section */}
                   <div className="flex flex-col gap-4">
-                    {/* Notice we are mapping over filteredInvoices now, not invoices! */}
                     {filteredInvoices.map((invoice) => (
                       <InvoiceCard key={invoice.id} invoice={invoice} />
                     ))}
 
-                    {/* Beautiful Empty State UI */}
                     {filteredInvoices.length === 0 && (
                       <div className="flex flex-col items-center justify-center text-center mt-16 md:mt-32 px-4 transition-colors">
                         <img
-                          // Update this path to wherever your SVG is actually saved!
-                          src="src/assets/illustration-empty.svg"
+                          // FIX: Use the imported variable here!
+                          src={emptyIllustration}
                           alt="No invoices"
                           className="w-[193px] h-[160px] md:w-[242px] md:h-[200px] mb-10 md:mb-16"
                         />
@@ -164,7 +150,6 @@ function App() {
             />
 
             <Route path="/invoice/:id" element={<InvoiceDetails />} />
-            {/* Redirect any unmatched path (e.g. GitHub Pages repo subpath) to root */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
